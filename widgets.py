@@ -20,9 +20,13 @@ class View(qt.QWidget):
         with qt.QPainter(qim) as p:
             for person in persons:
                 x, y, w, h = person.face
+                x = int(x)
+                y = int(y)
+                w = int(w)
+                h = int(h)
                 p.setPen(qt.QColor(255, 255, 255, 64))
-                p.drawRect(x, y, w, h / 4)
-                p.drawRect(x, y + h / 2, w, h / 4)
+                p.drawRect(x, y, w, int(h / 4))
+                p.drawRect(x, y + int(h / 2), w, int(h / 4))
                 font = p.font()
                 font.setPixelSize(28)
                 p.setFont(font)

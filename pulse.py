@@ -81,19 +81,33 @@ class Window(qt.QMainWindow):
         self.curves.close()
 
     def start(self):
+        if self.pipe and not self.pipe.done():
+            return
         self.pipe = asyncio.ensure_future(self.pipeline())
 
     def stop(self):
-        self.video.stop()
+        if self.pipe and not self.pipe.done():
+            self.pipe.cancel()
+        self.pipe = None
+        if self.video:
+            self.video.stop()
+            self.video = None
 
     async def pipeline(self):
         self.video = VideoStream(conf.CAM_ID)
         scene = self.video | FaceTracker | SceneAnalyzer
         lastScene = scene.aiter(skip_to_last=True)
-        async for frame, persons in lastScene:
-            self.view.draw(frame.image, persons)
-            if self.curves.isVisible():
-                self.curves.plot(persons)
+        try:
+            async for frame, persons in lastScene:
+                self.view.draw(frame.image, persons)
+                if self.curves.isVisible():
+                    self.curves.plot(persons)
+        except asyncio.CancelledError:
+            raise
+        finally:
+            if self.video:
+                self.video.stop()
+                self.video = None
 
 
 def pulse():
